@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pomodoro Timer with Progress</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding-top: 30px;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    #session-type {
+      font-size: 1.4rem;
+      margin-bottom: 10px;
+      color: #f0f0f0;
+    }
+
+    #timer {
+      font-size: 4rem;
+      font-weight: bold;
+    }
+
+    #milliseconds {
+      font-size: 2rem;
+      color: #ccc;
+    }
+
+    .buttons {
+      margin-top: 30px;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background: #fff;
+      color: #1e3c72;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    #session-count {
+      margin-top: 20px;
+      font-size: 1.2rem;
+    }
+
+    .progress-container {
+      width: 80%;
+      height: 30px;
+      background-color: #ffffff33;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background-color: #00ffcc;
+      transition: width 0.5s ease;
+    }
+
+    .goal-input {
+      margin-top: 20px;
+    }
+
+    input[type="number"] {
+      padding: 8px;
+      border-radius: 5px;
+      border: none;
+      width: 80px;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Pomodoro Timer</h1>
+  <div id="session-type">Ready to start!</div>
+  <div id="timer">00:00</div>
+  <div id="milliseconds">000</div>
+
+  <div class="goal-input">
+    <label>Set Goal (Sessions):</label>
+    <input type="number" id="goalInput" value="4" min="1" />
+  </div>
+
+  <div class="buttons">
+    <button id="startBtn">Start</button>
+    <button id="resetBtn">Reset</button>
+    <button id="showProgressBtn">Show Progress</button>
+  </div>
+
+  <div id="session-count">Completed Sessions: 0</div>
+
+  <div class="progress-container" id="progressContainer">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <audio id="alarm" src="https://www.soundjay.com/button/beep-07.wav" preload="auto"></audio>
+
+  <script>
+    let countdown;
+    let isWorkTime = true;
+    let completedSessions = 0;
+    const workDuration = 30 * 60 * 1000;
+    const breakDuration = 10 * 60 * 1000;
+
+    const timerDisplay = document.getElementById('timer');
+    const milliDisplay = document.getElementById('milliseconds');
+    const sessionType = document.getElementById('session-type');
+    const sessionCount = document.getElementById('session-count');
+    const goalInput = document.getElementById('goalInput');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const showProgressBtn = document.getElementById('showProgressBtn');
+    const alarmSound = document.getElementById('alarm');
+
+    function startSession() {
+      clearInterval(countdown);
+      const duration = isWorkTime ? workDuration : breakDuration;
+      const sessionName = isWorkTime ? "Work Time 💼" : "Break Time ☕";
+      sessionType.textContent = sessionName;
+      const endTime = Date.now() + duration;
+
+      countdown = setInterval(() => {
+        const msLeft = endTime - Date.now();
+
+        if (msLeft <= 0) {
+          clearInterval(countdown);
+          timerDisplay.textContent = "00:00";
+          milliDisplay.textContent = "000";
+          alarmSound.play();
+
+          if (isWorkTime) {
+            completedSessions++;
+            updateProgress();
+          }
+
+          isWorkTime = !isWorkTime;
+          startSession();
+          return;
+        }
+
+        displayTimeLeft(msLeft);
+      }, 33);
+    }
+
+    function displayTimeLeft(ms) {
+      const seconds = Math.floor(ms / 1000);
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      const millis = ms % 1000;
+
+      timerDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      milliDisplay.textContent = `${String(millis).padStart(3, '0')}`;
+    }
+
+    function resetTimer() {
+      clearInterval(countdown);
+      isWorkTime = true;
+      timerDisplay.textContent = "00:00";
+      milliDisplay.textContent = "000";
+      sessionType.textContent = "Ready to start!";
+      completedSessions = 0;
+      sessionCount.textContent = "Completed Sessions: 0";
+      updateProgress();
+    }
+
+    function updateProgress() {
+      sessionCount.textContent = `Completed Sessions: ${completedSessions}`;
+      const goal = parseInt(goalInput.value);
+      const percentage = Math.min((completedSessions / goal) * 100, 100);
+      progressBar.style.width = `${percentage}%`;
+    }
+
+    startBtn.addEventListener('click', startSession);
+    resetBtn.addEventListener('click', resetTimer);
+
+    showProgressBtn.addEventListener('click', () => {
+      progressContainer.style.display = 'block';
+      updateProgress();
+    });
+  </script>
+
+</body>
+</html>
